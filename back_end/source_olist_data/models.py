@@ -1,3 +1,8 @@
+import django
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'back_end.settings')
+django.setup()
 from django.db import models
 
 ddl = ['geolocation_ddl',
@@ -20,6 +25,12 @@ class Geolocations(models.Model):
 
     class Meta:
         db_table = 'geolocations'
+
+    @classmethod
+    def create(cls, kwargs):
+        geolocation = cls.create(**kwargs)
+        # do something with the geolocation
+        return geolocation
 
 
 class Sellers(models.Model):
