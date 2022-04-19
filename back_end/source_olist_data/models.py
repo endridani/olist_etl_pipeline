@@ -23,14 +23,10 @@ class Geolocations(models.Model):
     city = models.CharField(max_length=100)
     state_name = models.CharField(max_length=100)
 
+    column_names = ['zip_code_prefix', 'latitude', 'longitude', 'city', 'state_name']
+
     class Meta:
         db_table = 'geolocations'
-
-    @classmethod
-    def create(cls, kwargs):
-        geolocation = cls.create(**kwargs)
-        # do something with the geolocation
-        return geolocation
 
 
 class Sellers(models.Model):
