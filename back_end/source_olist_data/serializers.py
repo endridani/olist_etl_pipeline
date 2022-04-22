@@ -26,6 +26,13 @@ class OrdersSerializer(serializers.ModelSerializer):
         model = Orders
         fields = ['order_id', 'customer_id', 'order_status', 'order_purchase_timestamp', 'order_approved_at',
                   'order_delivered_carrier_date', 'order_delivered_customer_date', 'order_estimated_delivery_date']
+        extra_kwargs = {
+            'order_purchase_timestamp': {'format': '%Y-%m-%d %H:%M:%S'},
+            'order_approved_at': {'format': '%Y-%m-%d %H:%M:%S'},
+            'order_delivered_carrier_date': {'format': '%Y-%m-%d %H:%M:%S'},
+            'order_delivered_customer_date': {'format': '%Y-%m-%d %H:%M:%S'},
+            'order_estimated_delivery_date': {'format': '%Y-%m-%d %H:%M:%S'}
+        }
 
 
 class OrderReviewsSerializer(serializers.ModelSerializer):
@@ -35,11 +42,12 @@ class OrderReviewsSerializer(serializers.ModelSerializer):
                   'review_creation_date', 'review_answer_timestamp']
 
 
-class ProductsSerializers(serializers.ModelSerializer):
+class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Products
         fields = ['product_id', 'product_category_name', 'product_name_length', 'product_description_length',
-                  'product_photos_qty', 'product_weight_g', 'product_length_cm', 'product_height_cm', 'product_width_cm']
+                  'product_photos_qty', 'product_weight_g', 'product_length_cm', 'product_height_cm',
+                  'product_width_cm']
 
 
 class OrderItemsSerializer(serializers.ModelSerializer):
