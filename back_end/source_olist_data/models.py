@@ -58,11 +58,11 @@ class Orders(models.Model):
     order_id = models.CharField(primary_key=True, max_length=32)
     customer_id = models.ForeignKey('Customers', null=True, on_delete=models.SET_NULL)
     order_status = models.CharField(max_length=30)
-    order_purchase_timestamp = models.DateTimeField()
-    order_approved_at = models.DateTimeField()
-    order_delivered_carrier_date = models.DateTimeField()
-    order_delivered_customer_date = models.DateTimeField()
-    order_estimated_delivery_date = models.DateTimeField()
+    order_purchase_timestamp = models.DateTimeField(blank=True, null=True)
+    order_approved_at = models.DateTimeField(blank=True, null=True)
+    order_delivered_carrier_date = models.DateTimeField(blank=True, null=True)
+    order_delivered_customer_date = models.DateTimeField(blank=True, null=True)
+    order_estimated_delivery_date = models.DateTimeField(blank=True, null=True)
 
     COLUMN_NAMES = ['order_id', 'customer_id', 'order_status', 'order_purchase_timestamp', 'order_approved_at',
                     'order_delivered_carrier_date', 'order_delivered_customer_date', 'order_estimated_delivery_date']
@@ -75,10 +75,10 @@ class OrderReviews(models.Model):
     review_id = models.CharField(primary_key=True, max_length=32)
     order_id = models.ForeignKey('Orders', null=True, on_delete=models.SET_NULL)
     review_score = models.IntegerField()
-    review_comment_title = models.CharField(max_length=200, null=True)
-    review_comment_message = models.CharField(max_length=300, null=True)
-    review_creation_date = models.DateTimeField()
-    review_answer_timestamp = models.DateTimeField()
+    review_comment_title = models.CharField(max_length=200, blank=True, null=True)
+    review_comment_message = models.CharField(max_length=300, blank=True, null=True)
+    review_creation_date = models.DateTimeField(blank=True, null=True)
+    review_answer_timestamp = models.DateTimeField(blank=True, null=True)
 
     COLUMN_NAMES = ['review_id', 'order_id', 'review_score', 'review_comment_title', 'review_comment_message',
                     'review_creation_date', 'review_answer_timestamp']
@@ -89,9 +89,9 @@ class OrderReviews(models.Model):
 
 class Products(models.Model):
     product_id = models.CharField(primary_key=True, max_length=32)
-    product_category_name = models.CharField(max_length=100)
+    product_category_name = models.CharField(max_length=100, blank=True, )
     product_name_length = models.DecimalField(max_digits=12, decimal_places=6)
-    product_description_length = models.DecimalField(max_digits=12, decimal_places=6)
+    product_description_length = models.DecimalField(max_digits=12, decimal_places=6, blank=True)
     product_photos_qty = models.DecimalField(max_digits=12, decimal_places=6)
     product_weight_g = models.DecimalField(max_digits=12, decimal_places=6)
     product_length_cm = models.DecimalField(max_digits=12, decimal_places=6)
@@ -111,7 +111,7 @@ class OrderItems(models.Model):
     order_item_id = models.CharField(max_length=32)
     product_id = models.ForeignKey('Products', null=True, on_delete=models.SET_NULL)
     seller_id = models.ForeignKey('Sellers', null=True, on_delete=models.SET_NULL)
-    shipping_limit_date = models.DateTimeField()
+    shipping_limit_date = models.DateTimeField(blank=True, null=True)
     price = models.DecimalField(max_digits=6, decimal_places=2)
     freight_value = models.DecimalField(max_digits=6, decimal_places=2)
 
@@ -127,7 +127,7 @@ class OrderPayments(models.Model):
     payment_sequential = models.IntegerField()
     payment_type = models.CharField(max_length=100)
     payment_installments = models.IntegerField()
-    payment_value = models.DecimalField(max_digits=6, decimal_places=2)
+    payment_value = models.DecimalField(max_digits=8, decimal_places=2)
 
     COLUMN_NAMES = ['order_id', 'payment_sequential', 'payment_type', 'payment_installments', 'payment_value']
 
@@ -136,10 +136,7 @@ class OrderPayments(models.Model):
 
 
 class ProductCategoryNameTranslation(models.Model):
-    product_category_name = models.CharField(max_length=200)
-    product_category_name_english = models.CharField(max_length=200)
+    product_category_name = models.CharField(max_length=200, blank=True)
+    product_category_name_english = models.CharField(max_length=200, blank=True)
 
     COLUMN_NAMES = ['product_category_name', 'product_category_name_english']
-
-    class Meta:
-        db_table = 'product_category_name_translation'

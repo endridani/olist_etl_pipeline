@@ -40,6 +40,10 @@ class OrderReviewsSerializer(serializers.ModelSerializer):
         model = OrderReviews
         fields = ['review_id', 'order_id', 'review_score', 'review_comment_title', 'review_comment_message',
                   'review_creation_date', 'review_answer_timestamp']
+        extra_kwargs = {
+            'review_creation_date': {'format': '%Y-%m-%d %H:%M:%S'},
+            'review_answer_timestamp': {'format': '%Y-%m-%d %H:%M:%S'}
+        }
 
 
 class ProductsSerializer(serializers.ModelSerializer):
@@ -55,6 +59,9 @@ class OrderItemsSerializer(serializers.ModelSerializer):
         model = OrderItems
         fields = ['order_id', 'order_item_id', 'product_id', 'seller_id', 'shipping_limit_date', 'price',
                   'freight_value']
+        extra_kwargs = {
+            'shipping_limit_date': {'format': '%Y-%m-%d %H:%M:%S'}
+        }
 
 
 class OrderPaymentsSerializer(serializers.ModelSerializer):

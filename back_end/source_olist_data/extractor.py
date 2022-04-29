@@ -1,5 +1,6 @@
 import django
 import pandas as pd
+import numpy as np
 import json
 import decimal
 import os
@@ -35,7 +36,7 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Geolocation records to be inserted...')
             print('Inserting records...')
             records = [Geolocations(**data) for data in serializer.validated_data]
-            Geolocations.objects.bulk_create(records)
+            Geolocations.objects.bulk_create(records, batch_size=100)
             print(len(Geolocations.objects.all()), 'Geolocation records inserted!')
 
         def extract_sellers():
@@ -57,7 +58,7 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Seller records to be inserted...')
             print('Inserting records...')
             records = [Sellers(**data) for data in serializer.validated_data]
-            Sellers.objects.bulk_create(records)
+            Sellers.objects.bulk_create(records, batch_size=100)
             print(len(Sellers.objects.all()), 'Seller records inserted!')
 
         def extract_customers():
@@ -80,22 +81,21 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Customer records to be inserted...')
             print('Inserting records...')
             records = [Customers(**data) for data in serializer.validated_data]
-            Customers.objects.bulk_create(records)
+            Customers.objects.bulk_create(records, batch_size=100)
             print(len(Customers.objects.all()), 'Customer records inserted!')
 
         def extract_orders():
             df_orders = pd.read_csv('source_olist_data/olist_csv_files/olist_orders_dataset.txt',
                                     names=Orders.COLUMN_NAMES,
                                     header=0,
-                                    dtype={'order_status': 'string'},
+                                    dtype={'order_status': 'string',
+                                           'order_purchase_timestamp': 'string',
+                                           'order_approved_at': 'string',
+                                           'order_delivered_carrier_date': 'string',
+                                           'order_delivered_customer_date': 'string',
+                                           'order_estimated_delivery_date': 'string'},
                                     converters={'order_id': lambda x: str(x),
-                                                'customer_id': lambda x: str(x)},
-                                    parse_dates=['order_purchase_timestamp',
-                                                 'order_approved_at',
-                                                 'order_delivered_carrier_date',
-                                                 'order_delivered_customer_date',
-                                                 'order_estimated_delivery_date'],
-                                    date_parser=lambda col: pd.to_datetime(col, format='%Y-%m-%d %H:%M:%S'))
+                                                'customer_id': lambda x: str(x)})
             df_orders.drop_duplicates(subset=['order_id'], keep='first', inplace=True)
             df_orders = df_orders.where(pd.notnull(df_orders), None)
             df_orders = df_orders[df_orders["customer_id"].isin(
@@ -107,7 +107,7 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Order records to be inserted...')
             print('Inserting records...')
             records = [Orders(**data) for data in serializer.validated_data]
-            Orders.objects.bulk_create(records)
+            Orders.objects.bulk_create(records, batch_size=100)
             print(len(Orders.objects.all()), 'Order records inserted!')
 
         def extract_order_reviews():
@@ -116,12 +116,11 @@ class Extractor:
                                            header=0,
                                            dtype={'review_score': 'int32',
                                                   'review_comment_title': 'string',
-                                                  'review_comment_message': 'string'},
+                                                  'review_comment_message': 'string',
+                                                  'review_creation_date': 'string',
+                                                  'review_answer_timestamp': 'string'},
                                            converters={'review_id': lambda x: str(x),
                                                        'order_id': lambda x: str(x)},
-                                           parse_dates=['review_creation_date',
-                                                        'review_answer_timestamp'],
-                                           date_parser=lambda col: pd.to_datetime(col, format='%Y-%m-%d %H:%M:%S'),
                                            na_filter=False)
             df_order_reviews.drop_duplicates(subset=['review_id'], keep='first', inplace=True)
             df_order_reviews = df_order_reviews.where(pd.notnull(df_order_reviews), None)
@@ -134,26 +133,27 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Order review records to be inserted...')
             print('Inserting records...')
             records = [OrderReviews(**data) for data in serializer.validated_data]
-            OrderReviews.objects.bulk_create(records)
+            OrderReviews.objects.bulk_create(records, batch_size=100)
             print(len(OrderReviews.objects.all()), 'Order review records inserted!')
 
         def extract_products():
             df_products = pd.read_csv('source_olist_data/olist_csv_files/olist_products_dataset.txt',
                                       names=Products.COLUMN_NAMES,
                                       header=0,
-                                      dtype={'product_category_name': 'string'},
-                                      converters={'product_id': lambda x: str(x),
-                                                  'product_name_length': decimal.Decimal,
-                                                  'product_description_length': decimal.Decimal,
-                                                  'product_photos_qty': decimal.Decimal,
-                                                  'product_weight_g': decimal.Decimal,
-                                                  'product_length_cm': decimal.Decimal,
-                                                  'product_height_cm': decimal.Decimal,
-                                                  'product_width_cm': decimal.Decimal})
+                                      # dtype={'product_category_name': 'string',
+                                      #        'product_name_length': 'int32',
+                                      #        'product_description_length': 'int32',
+                                      #        'product_photos_qty': 'int32',
+                                      #        'product_weight_g': 'int32',
+                                      #        'product_length_cm': 'int32',
+                                      #        'product_height_cm': 'int32',
+                                      #        'product_width_cm': 'int32'},
+                                      converters={'product_id': lambda x: str(x)},
+                                      na_filter=True)
             df_products.drop_duplicates(subset=['product_id'], keep='first', inplace=True)
             df_products = df_products.where(pd.notnull(df_products), None)
-            # df_products.replace({np.inf: np.nan, -np.inf: np.nan}, inplace=True)
-            # df_products = df_products.fillna(0)
+            df_products.replace({np.inf: np.nan, -np.inf: np.nan}, inplace=True)
+            df_products = df_products.fillna(0)
             df_products = df_products.to_json(orient='records')
             df_products = json.loads(df_products)
             serializer = ProductsSerializer(data=df_products, many=True)
@@ -161,21 +161,20 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Product records to be inserted...')
             print('Inserting records...')
             records = [Products(**data) for data in serializer.validated_data]
-            Products.objects.bulk_create(records)
+            Products.objects.bulk_create(records, batch_size=100)
             print(len(Products.objects.all()), 'Product records inserted!')
 
         def extract_order_items():
             df_order_items = pd.read_csv('source_olist_data/olist_csv_files/olist_order_items_dataset.txt',
                                          names=OrderItems.COLUMN_NAMES,
                                          header=0,
-                                         dtype={'order_item_id': 'string'},
+                                         dtype={'order_item_id': 'string',
+                                                'shipping_limit_date': 'string'},
                                          converters={'order_id': lambda x: str(x),
                                                      'product_id': lambda x: str(x),
                                                      'seller_id': lambda x: str(x),
                                                      'price': decimal.Decimal,
-                                                     'freight_value': decimal.Decimal},
-                                         parse_dates=['shipping_limit_date'],
-                                         date_parser=lambda col: pd.to_datetime(col, format='%Y-%m-%d %H:%M:%S'))
+                                                     'freight_value': decimal.Decimal})
             df_order_items = df_order_items[df_order_items["order_id"].isin(
                 [order.order_id for order in Orders.objects.all()]) == True]
             df_order_items = df_order_items[df_order_items["product_id"].isin(
@@ -191,21 +190,18 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Order item records to be inserted...')
             print('Inserting records...')
             records = [OrderItems(**data) for data in serializer.validated_data]
-            OrderItems.objects.bulk_create(records)
+            OrderItems.objects.bulk_create(records, batch_size=100)
             print(len(OrderItems.objects.all()), 'Order item records inserted!')
 
         def extract_order_payments():
-            df_order_payments = pd.read_csv('source_olist_data/olist_csv_files/olist_order_payments_dataset.txt',
+            df_order_payments = pd.read_csv('source_olist_data/olist_csv_files/olist_order_payments_dataset.csv',
                                             names=OrderPayments.COLUMN_NAMES,
                                             header=0,
-                                            dtype={'payment_sequential': 'int32',
-                                                   'payment_type': 'string',
-                                                   'payment_installments': 'int32'},
-                                            converters={'order_id': lambda x: str(x),
-                                                        'payment_value': decimal.Decimal})
+                                            converters={'order_id': lambda x: str(x)})
+            df_order_payments = df_order_payments.where(pd.notnull(df_order_payments), None)
             df_order_payments = df_order_payments[df_order_payments["order_id"].isin(
                 [order.order_id for order in Orders.objects.all()]) == True]
-            # df_order_payments.replace({np.inf: np.nan, -np.inf: np.nan}, inplace=True)
+            df_order_payments.replace({np.inf: np.nan, -np.inf: np.nan}, inplace=True)
             df_order_payments = df_order_payments.to_json(orient='records')
             df_order_payments = json.loads(df_order_payments)
             serializer = OrderPaymentsSerializer(data=df_order_payments, many=True)
@@ -213,7 +209,7 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Order payment records to be inserted...')
             print('Inserting records...')
             records = [OrderPayments(**data) for data in serializer.validated_data]
-            OrderPayments.objects.bulk_create(records)
+            OrderPayments.objects.bulk_create(records, batch_size=100)
             print(len(OrderPayments.objects.all()), 'Order payment records inserted!')
 
         def extract_product_category_name_translation():
@@ -229,15 +225,15 @@ class Extractor:
             print(len([data for data in serializer.validated_data]), 'Category name records to be inserted...')
             print('Inserting records...')
             records = [ProductCategoryNameTranslation(**data) for data in serializer.validated_data]
-            ProductCategoryNameTranslation.objects.bulk_create(records)
+            ProductCategoryNameTranslation.objects.bulk_create(records, batch_size=100)
             print(len(ProductCategoryNameTranslation.objects.all()), 'Category name records inserted!')
 
         # extract_geolocations()
         # extract_sellers()
         # extract_customers()
-        extract_orders()
-        extract_order_reviews()
-        extract_products()
-        extract_order_items()
+        # extract_orders()
+        # extract_order_reviews()
+        # extract_products()
+        # extract_order_items()
         extract_order_payments()
         extract_product_category_name_translation()
