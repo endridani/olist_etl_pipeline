@@ -6,6 +6,8 @@ class DimCustomer(models.Model):
     customer_city = models.CharField(max_length=100, null=True)
     customer_state = models.CharField(max_length=100, null=True)
 
+    COLUMN_NAMES = ['customer_id', 'customer_city', 'customer_state']
+
     class Meta:
         db_table = 'DIM_CUSTOMER'
 
@@ -14,6 +16,8 @@ class DimSeller(models.Model):
     seller_id = models.CharField(primary_key=True, max_length=32)
     seller_city = models.CharField(max_length=100, null=True)
     seller_state = models.CharField(max_length=100, null=True)
+
+    COLUMN_NAMES = ['seller_id', 'seller_city', 'seller_state']
 
     class Meta:
         db_table = 'DIM_SELLER'
@@ -27,6 +31,9 @@ class DimProduct(models.Model):
     product_length_cm = models.DecimalField(max_digits=12, decimal_places=6, null=True)
     product_height_cm = models.DecimalField(max_digits=12, decimal_places=6, null=True)
     product_width_cm = models.DecimalField(max_digits=12, decimal_places=6, null=True)
+
+    COLUMN_NAMES = ['product_id', 'product_cat_name_pt', 'product_cat_name_en', 'product_weight_g', 'product_length_cm',
+                    'product_height_cm', 'product_width_cm']
 
     class Meta:
         db_table = 'DIM_PRODUCT'
