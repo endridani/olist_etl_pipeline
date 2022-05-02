@@ -1,8 +1,9 @@
 from rest_framework import generics
 
-from source_olist_data.models import Products, Customers, Sellers
+from source_olist_data.models import Products, Customers, Sellers, Orders, OrderReviews, OrderItems, OrderPayments
 from source_olist_data.serializers import ProductsSerializer, CustomersSerializer, SellersSerializer, \
-    ProductCategoryNameTranslation, ProductCategoryNameTranslationSerializer
+    ProductCategoryNameTranslation, ProductCategoryNameTranslationSerializer, OrdersSerializer, \
+    OrderReviewsSerializer, OrderItemsSerializer, OrderPaymentsSerializer
 
 
 class CustomersList(generics.ListCreateAPIView):
@@ -23,3 +24,23 @@ class ProductsList(generics.ListCreateAPIView):
 class ProductCategoryNameTranslationList(generics.ListCreateAPIView):
     queryset = ProductCategoryNameTranslation.objects.all()
     serializer_class = ProductCategoryNameTranslationSerializer
+
+
+class OrdersList(generics.ListCreateAPIView):
+    queryset = Orders.objects.all()
+    serializer_class = OrdersSerializer
+
+
+class OrderReviewsList(generics.ListCreateAPIView):
+    queryset = OrderReviews.objects.all()
+    serializer_class = OrderReviewsSerializer
+
+
+class OrderItemsList(generics.ListCreateAPIView):
+    queryset = OrderItems.objects.all()
+    serializer_class = OrderItemsSerializer
+
+
+class OrderPaymentsList(generics.ListCreateAPIView):
+    queryset = OrderPayments.objects.all()
+    serializer_class = OrderPaymentsSerializer
