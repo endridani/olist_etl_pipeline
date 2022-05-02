@@ -25,8 +25,8 @@ class DimSeller(models.Model):
 
 class DimProduct(models.Model):
     product_id = models.CharField(primary_key=True, max_length=32)
-    product_cat_name_pt = models.CharField(max_length=100, null=True)
-    product_cat_name_en = models.CharField(max_length=100, null=True)
+    product_cat_name_pt = models.CharField(max_length=100, null=True, blank=True)
+    product_cat_name_en = models.CharField(max_length=100, null=True, blank=True)
     product_weight_g = models.DecimalField(max_digits=12, decimal_places=6, null=True)
     product_length_cm = models.DecimalField(max_digits=12, decimal_places=6, null=True)
     product_height_cm = models.DecimalField(max_digits=12, decimal_places=6, null=True)

@@ -89,7 +89,7 @@ class OrderReviews(models.Model):
 
 class Products(models.Model):
     product_id = models.CharField(primary_key=True, max_length=32)
-    product_category_name = models.CharField(max_length=100, blank=True, )
+    product_category_name = models.CharField(max_length=100, blank=True)
     product_name_length = models.DecimalField(max_digits=12, decimal_places=6)
     product_description_length = models.DecimalField(max_digits=12, decimal_places=6, blank=True)
     product_photos_qty = models.DecimalField(max_digits=12, decimal_places=6)

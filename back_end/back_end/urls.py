@@ -16,11 +16,12 @@ Including another URLconf
 from django.urls import path, include
 from rest_framework import routers
 
-from data_mart.views import CustomersViewSet, SellersViewSet
+from data_mart.views import CustomersViewSet, SellersViewSet, ProductsViewSet
 
 router = routers.SimpleRouter()
 router.register(r'dim_customers', CustomersViewSet)
 router.register(r'dim_sellers', SellersViewSet)
+router.register(r'dim_products', ProductsViewSet)
 
 urlpatterns = router.urls
 urlpatterns += [

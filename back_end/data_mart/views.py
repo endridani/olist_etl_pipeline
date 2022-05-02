@@ -3,8 +3,9 @@ from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 
 from data_mart.handler import Handler
-from data_mart.models import DimCustomer, DimSeller
-from data_mart.serializers import DimCustomerSerializer, DimSellerSerializer
+from data_mart.models import DimCustomer, DimSeller, DimProduct, FactDeliveredOrders
+from data_mart.serializers import DimCustomerSerializer, DimSellerSerializer, DimProductSerializer, \
+    FactDeliveredOrdersSerializer
 
 
 class CustomersViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
@@ -33,3 +34,22 @@ class SellersViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
         Handler.process_customers_and_sellers(data_type='sellers', serializer=DimSellerSerializer,
                                               model=DimSeller, keys=columns, sellers=True)
         return Response({"success": True})
+
+
+class ProductsViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """A ViewSet for viewing and updating Products information"""
+
+    queryset = DimProduct.objects.all()
+    serializer_class = DimProductSerializer
+
+    @action(detail=False, methods=['post'])
+    def add_products(self, request):
+        Handler.process_products()
+        return Response({'success': True})
+
+
+class DeliveredOrdersViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
+    """A ViewSet for viewing and updating Delivered Orders information"""
+
+    queryset = FactDeliveredOrders.objects.all()
+    serializer_class = FactDeliveredOrdersSerializer
