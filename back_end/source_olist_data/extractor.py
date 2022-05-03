@@ -15,6 +15,12 @@ from source_olist_data.serializers import GeolocationsSerializer, SellersSeriali
 
 
 class Extractor:
+    """
+    A class that serves to extract data from csv files.
+    Process data, serialize and load into source tables.
+
+    TODO: Code Refactoring to remove reusable stmts.
+    """
 
     @staticmethod
     def synchronize_sources():

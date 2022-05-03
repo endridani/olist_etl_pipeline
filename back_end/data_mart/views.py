@@ -53,3 +53,8 @@ class DeliveredOrdersViewSet(viewsets.GenericViewSet, mixins.ListModelMixin):
 
     queryset = FactDeliveredOrders.objects.all()
     serializer_class = FactDeliveredOrdersSerializer
+
+    @action(detail=False, methods=['post'])
+    def add_delivered_orders(self, request):
+        Handler.process_delivered_orders()
+        return Response({'success': True})

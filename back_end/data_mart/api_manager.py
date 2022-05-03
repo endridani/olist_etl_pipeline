@@ -2,7 +2,10 @@ import requests
 
 
 class ApiClient:
-    """Stores communication data for source tables"""
+    """
+    A class to store communication with source tables.
+    Serves as tool to extract data through APIs.
+    """
 
     def __init__(self):
         self.url = "http://127.0.0.1:8000"

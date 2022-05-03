@@ -6,7 +6,7 @@ from data_mart.serializers import DimProductSerializer
 class Handler:
     """
     A class for processing and transforming data to correlate with DWH format.
-    Serializing, checking validity and updating/creating objects.
+    Serializing, checking validity and updating/creating objects in DWH.
     """
 
     @staticmethod
@@ -50,4 +50,41 @@ class Handler:
 
     @staticmethod
     def process_delivered_orders():
-        pass
+        def get_number_of_orders(date, customer):
+            filtered_orders = [data for data in delivered_orders
+                               if data['order_delivered_customer_date'] == date and data['customer_id'] == customer]
+            return len(filtered_orders)
+
+        def get_order_item_fields(order):
+            """TODO: Check if there are more than 1 records in filtered"""
+            filtered_order_item = [data for data in order_items if data['order_id'] == order]
+            if filtered_order_item:
+                order_item_fields = {key: filtered_order_item[0][key] for key in ['seller_id', 'product_id']}
+                return order_item_fields
+            return {'seller_id': None, 'product_id': None}
+
+        order_keys = ['order_id', 'customer_id', 'order_delivered_customer_date']
+
+        # Get API data from needed tables
+        api_data = api_client
+        orders = [api_data.get_data(data_type='orders')[10]]
+        # order_reviews = api_data.get_data(data_type='order_reviews')
+        order_items = api_data.get_data(data_type='order_items')
+        # order_payments = api_data.get_data(data_type='order_payments')
+
+        # Filter fields and get only delivered orders
+        delivered_orders = [{key: order[key] for key in order_keys}
+                            for order in orders if order['order_status'] == 'delivered']
+
+        for order in delivered_orders:
+            # order['delivery_day_id'] = order.pop('order_delivered_customer_date')
+
+            # Add field nr_of_orders
+            delivery_day = order['order_delivered_customer_date']
+            customer_id = order['customer_id']
+            order['nr_of_orders'] = get_number_of_orders(delivery_day, customer_id)
+
+            # Add fields from order items
+            order.update(**get_order_item_fields(order['order_id']))
+
+        return delivered_orders

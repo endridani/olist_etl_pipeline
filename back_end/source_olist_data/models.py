@@ -5,16 +5,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'back_end.settings')
 django.setup()
 from django.db import models
 
-ddl = ['geolocation_ddl',
-       'sellers_ddl',
-       'customers_ddl',
-       'orders_ddl',
-       'order_reviews_ddl',
-       'products_ddl',
-       'order_items_ddl',
-       'order_payments_ddl',
-       'prod_cat_name_ddl']
-
 
 class Geolocations(models.Model):
     zip_code_prefix = models.CharField(primary_key=True, max_length=5)
