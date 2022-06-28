@@ -59,18 +59,29 @@ class Handler:
             """TODO: Check if there are more than 1 records in filtered"""
             filtered_order_item = [data for data in order_items if data['order_id'] == order]
             if filtered_order_item:
+                nr_of_products = len(filtered_order_item)
+                product_sales_revenue = sum(item['price'] for item in filtered_order_item)
+                shipping_revenue = sum(item['freight_value'] for item in filtered_order_item)
                 order_item_fields = {key: filtered_order_item[0][key] for key in ['seller_id', 'product_id']}
-                return order_item_fields
-            return {'seller_id': None, 'product_id': None}
+                return {**order_item_fields,
+                        'nr_of_products': nr_of_products,
+                        'product_sales_revenue': product_sales_revenue,
+                        'shipping_revenue': shipping_revenue}
+            return {'seller_id': None,
+                    'product_id': None,
+                    'nr_of_products': 0,
+                    'product_sales_revenue': 0.0,
+                    'shipping_revenue': 0.0
+                    }
 
         order_keys = ['order_id', 'customer_id', 'order_delivered_customer_date']
 
         # Get API data from needed tables
         api_data = api_client
-        orders = [api_data.get_data(data_type='orders')[10]]
-        # order_reviews = api_data.get_data(data_type='order_reviews')
+        orders = api_data.get_data(data_type='orders')
+        order_reviews = api_data.get_data(data_type='order_reviews')
         order_items = api_data.get_data(data_type='order_items')
-        # order_payments = api_data.get_data(data_type='order_payments')
+        order_payments = api_data.get_data(data_type='order_payments')
 
         # Filter fields and get only delivered orders
         delivered_orders = [{key: order[key] for key in order_keys}
