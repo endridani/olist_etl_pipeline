@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from data_mart.api_manager import api_client
-from data_mart.models import DimProduct
-from data_mart.serializers import DimProductSerializer
+from data_mart.models import DimProduct, FactDeliveredOrders
+from data_mart.serializers import DimProductSerializer, FactDeliveredOrdersSerializer
 
 
 class Handler:
@@ -50,18 +52,22 @@ class Handler:
 
     @staticmethod
     def process_delivered_orders():
+        """
+        TODO: Fix foreign key attributes, add object not str
+        """
         def get_number_of_orders(date, customer):
-            filtered_orders = [data for data in delivered_orders
-                               if data['order_delivered_customer_date'] == date and data['customer_id'] == customer]
+            filtered_orders = [data for data in orders
+                               if data['order_delivered_customer_date'] == date
+                               and data['customer_id'] == customer
+                               and data['order_status'] == 'delivered']
             return len(filtered_orders)
 
         def get_order_item_fields(order):
-            """TODO: Check if there are more than 1 records in filtered"""
             filtered_order_item = [data for data in order_items if data['order_id'] == order]
             if filtered_order_item:
                 nr_of_products = len(filtered_order_item)
-                product_sales_revenue = sum(item['price'] for item in filtered_order_item)
-                shipping_revenue = sum(item['freight_value'] for item in filtered_order_item)
+                product_sales_revenue = sum(float(item['price']) for item in filtered_order_item)
+                shipping_revenue = sum(float(item['freight_value']) for item in filtered_order_item)
                 order_item_fields = {key: filtered_order_item[0][key] for key in ['seller_id', 'product_id']}
                 return {**order_item_fields,
                         'nr_of_products': nr_of_products,
@@ -69,27 +75,33 @@ class Handler:
                         'shipping_revenue': shipping_revenue}
             return {'seller_id': None,
                     'product_id': None,
-                    'nr_of_products': 0,
-                    'product_sales_revenue': 0.0,
-                    'shipping_revenue': 0.0
+                    'nr_of_products': None,
+                    'product_sales_revenue': None,
+                    'shipping_revenue': None
                     }
+
+        def get_order_review_fields(order):
+            filtered_order_item = [data for data in order_reviews if data['order_id'] == order]
+            if filtered_order_item:
+                nr_of_review_score = len(filtered_order_item)
+                sum_review_score = sum(int(item['review_score']) for item in filtered_order_item)
+                return {'nr_of_review_score': nr_of_review_score, 'sum_review_score': sum_review_score}
+            return {'nr_of_review_score': None, 'sum_review_score': None}
 
         order_keys = ['order_id', 'customer_id', 'order_delivered_customer_date']
 
         # Get API data from needed tables
         api_data = api_client
-        orders = api_data.get_data(data_type='orders')
+        orders = api_data.get_data(data_type='orders')[:10]
         order_reviews = api_data.get_data(data_type='order_reviews')
         order_items = api_data.get_data(data_type='order_items')
-        order_payments = api_data.get_data(data_type='order_payments')
+        # order_payments = api_data.get_data(data_type='order_payments')
 
         # Filter fields and get only delivered orders
         delivered_orders = [{key: order[key] for key in order_keys}
                             for order in orders if order['order_status'] == 'delivered']
 
         for order in delivered_orders:
-            # order['delivery_day_id'] = order.pop('order_delivered_customer_date')
-
             # Add field nr_of_orders
             delivery_day = order['order_delivered_customer_date']
             customer_id = order['customer_id']
@@ -98,4 +110,14 @@ class Handler:
             # Add fields from order items
             order.update(**get_order_item_fields(order['order_id']))
 
-        return delivered_orders
+            # Add fields from order reviews
+            order.update(**get_order_review_fields(order['order_id']))
+
+            order.pop('order_id')
+            order['delivery_day_id'] = datetime.strptime(order.pop('order_delivered_customer_date'),
+                                                         '%Y-%m-%d %H:%M:%S').date()
+
+        serializer = FactDeliveredOrdersSerializer(data=delivered_orders, many=True)
+        serializer.is_valid(raise_exception=True)
+        records = [FactDeliveredOrders(**data) for data in serializer.validated_data]
+        FactDeliveredOrders.objects.bulk_create(records, batch_size=100)
