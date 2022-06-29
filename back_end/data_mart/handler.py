@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from data_mart.api_manager import api_client
-from data_mart.models import DimProduct, FactDeliveredOrders
+from data_mart.models import DimProduct, FactDeliveredOrders, DimCustomer, DimSeller
 from data_mart.serializers import DimProductSerializer, FactDeliveredOrdersSerializer
 
 
@@ -52,9 +52,7 @@ class Handler:
 
     @staticmethod
     def process_delivered_orders():
-        """
-        TODO: Fix foreign key attributes, add object not str
-        """
+
         def get_number_of_orders(date, customer):
             filtered_orders = [data for data in orders
                                if data['order_delivered_customer_date'] == date
@@ -88,20 +86,34 @@ class Handler:
                 return {'nr_of_review_score': nr_of_review_score, 'sum_review_score': sum_review_score}
             return {'nr_of_review_score': None, 'sum_review_score': None}
 
+        def get_date(order_item, default=None):
+            try:
+                return datetime.strptime(order_item.pop('order_delivered_customer_date'), '%Y-%m-%d %H:%M:%S').date()
+            except (ValueError, TypeError):
+                return default
+
+        def get_object(model, lookup, object_id):
+            try:
+                return model.objects.get(**{lookup: object_id})
+            except model.DoesNotExist:
+                return None
+
         order_keys = ['order_id', 'customer_id', 'order_delivered_customer_date']
 
         # Get API data from needed tables
         api_data = api_client
-        orders = api_data.get_data(data_type='orders')[:10]
+        orders = api_data.get_data(data_type='orders')
         order_reviews = api_data.get_data(data_type='order_reviews')
         order_items = api_data.get_data(data_type='order_items')
-        # order_payments = api_data.get_data(data_type='order_payments')
 
         # Filter fields and get only delivered orders
         delivered_orders = [{key: order[key] for key in order_keys}
                             for order in orders if order['order_status'] == 'delivered']
 
+        count = 1
+        max_count = len(delivered_orders)
         for order in delivered_orders:
+            print(f"ORDER {count}/{max_count} | ({order['order_id']})")
             # Add field nr_of_orders
             delivery_day = order['order_delivered_customer_date']
             customer_id = order['customer_id']
@@ -113,11 +125,19 @@ class Handler:
             # Add fields from order reviews
             order.update(**get_order_review_fields(order['order_id']))
 
+            # Additional data processing
             order.pop('order_id')
-            order['delivery_day_id'] = datetime.strptime(order.pop('order_delivered_customer_date'),
-                                                         '%Y-%m-%d %H:%M:%S').date()
+            # order['customer_id'] = get_object(DimCustomer, 'customer_id', order.pop('customer_id'))
+            # order['seller_id'] = get_object(DimSeller, 'seller_id', order.pop('seller_id'))
+            # order['product_id'] = get_object(DimProduct, 'product_id', order.pop('product_id'))
+            order['delivery_day_id'] = get_date(order)
+            count += 1
 
-        serializer = FactDeliveredOrdersSerializer(data=delivered_orders, many=True)
-        serializer.is_valid(raise_exception=True)
-        records = [FactDeliveredOrders(**data) for data in serializer.validated_data]
-        FactDeliveredOrders.objects.bulk_create(records, batch_size=100)
+        return delivered_orders
+
+        # print('Serializing Orders...')
+        # serializer = FactDeliveredOrdersSerializer(data=delivered_orders, many=True)
+        # serializer.is_valid(raise_exception=True)
+        # records = [FactDeliveredOrders(**data) for data in serializer.validated_data]
+        # print('Creating Order objects...')
+        # FactDeliveredOrders.objects.bulk_create(records, batch_size=100)
