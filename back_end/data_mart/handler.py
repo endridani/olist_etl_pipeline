@@ -64,8 +64,8 @@ class Handler:
             filtered_order_item = [data for data in order_items if data['order_id'] == order]
             if filtered_order_item:
                 nr_of_products = len(filtered_order_item)
-                product_sales_revenue = sum(float(item['price']) for item in filtered_order_item)
-                shipping_revenue = sum(float(item['freight_value']) for item in filtered_order_item)
+                product_sales_revenue = round(sum(float(item['price']) for item in filtered_order_item), 2)
+                shipping_revenue = round(sum(float(item['freight_value']) for item in filtered_order_item), 2)
                 order_item_fields = {key: filtered_order_item[0][key] for key in ['seller_id', 'product_id']}
                 return {**order_item_fields,
                         'nr_of_products': nr_of_products,
