@@ -53,8 +53,8 @@ class FactDeliveredOrders(models.Model):
     delivery_day_id = models.DateField(null=True)
     nr_of_orders = models.IntegerField(null=True)
     nr_of_products = models.IntegerField(null=True)
-    product_sales_revenue = models.DecimalField(max_digits=6, decimal_places=2, null=True)
-    shipping_revenue = models.DecimalField(max_digits=6, decimal_places=2, null=True)
+    product_sales_revenue = models.DecimalField(max_digits=8, decimal_places=2, null=True)
+    shipping_revenue = models.DecimalField(max_digits=8, decimal_places=2, null=True)
     nr_of_review_score = models.IntegerField(null=True)
     sum_review_score = models.IntegerField(null=True)
 

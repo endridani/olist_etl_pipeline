@@ -110,10 +110,7 @@ class Handler:
         delivered_orders = [{key: order[key] for key in order_keys}
                             for order in orders if order['order_status'] == 'delivered']
 
-        count = 1
-        max_count = len(delivered_orders)
         for order in delivered_orders:
-            print(f"ORDER {count}/{max_count} | ({order['order_id']})")
             # Add field nr_of_orders
             delivery_day = order['order_delivered_customer_date']
             customer_id = order['customer_id']
@@ -127,17 +124,10 @@ class Handler:
 
             # Additional data processing
             order.pop('order_id')
-            # order['customer_id'] = get_object(DimCustomer, 'customer_id', order.pop('customer_id'))
-            # order['seller_id'] = get_object(DimSeller, 'seller_id', order.pop('seller_id'))
-            # order['product_id'] = get_object(DimProduct, 'product_id', order.pop('product_id'))
             order['delivery_day_id'] = get_date(order)
-            count += 1
+            # order['customer_id'] = get_object(DimCustomer, 'customer_id', order.pop('customer_id'))
 
-        return delivered_orders
-
-        # print('Serializing Orders...')
-        # serializer = FactDeliveredOrdersSerializer(data=delivered_orders, many=True)
-        # serializer.is_valid(raise_exception=True)
-        # records = [FactDeliveredOrders(**data) for data in serializer.validated_data]
-        # print('Creating Order objects...')
-        # FactDeliveredOrders.objects.bulk_create(records, batch_size=100)
+        serializer = FactDeliveredOrdersSerializer(data=delivered_orders, many=True)
+        serializer.is_valid(raise_exception=True)
+        records = [FactDeliveredOrders(**data) for data in serializer.validated_data]
+        FactDeliveredOrders.objects.bulk_create(records, batch_size=100)
